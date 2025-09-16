@@ -33,6 +33,11 @@ If a new version of the mhn package is available, you can upgrade your installat
 pip install --upgrade mhn
 ```
 
+You can also install the package from source with
+```bash
+python setup.py install
+```
+
 ## Quickstart: Training a New MHN
 
 
