@@ -110,7 +110,7 @@ cdef void restricted_kronvec(double[:, :] theta_mat, int i, double[:] x_vec, Sta
     cdef double[:] theta_i = theta_mat[i, :]
     cdef int n = theta_i.shape[0]
     cdef int nx = 1 << mutation_num
-    cdef int nxhalf = nx / 2
+    cdef int nxhalf = nx // 2
     cdef double mOne = -1
     cdef double zero = 0
 
@@ -462,7 +462,7 @@ cdef double restricted_gradient_and_score(double[:, :] theta, State *state, doub
     cdef int n = theta.shape[0]
     cdef int mutation_num = get_mutation_num(state)
     cdef int nx = 1 << mutation_num
-    cdef int nxhalf = nx / 2
+    cdef int nxhalf = nx // 2
     cdef int incx = 1
     cdef int incx2 = 2
     cdef int incx0 = 0

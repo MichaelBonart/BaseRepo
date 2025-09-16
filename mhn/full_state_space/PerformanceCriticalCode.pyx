@@ -30,7 +30,7 @@ cdef void internal_kron_vec(double[:, :] theta_mat, int i, double[:] x_vec, doub
     cdef double[:] theta_i = theta_mat[i, :]
     cdef int n = theta_mat.shape[0]
     cdef int nx = 1 << n
-    cdef int nxhalf = nx / 2
+    cdef int nxhalf = nx // 2
     cdef double mOne = -1
     cdef double zero = 0
 
@@ -128,7 +128,7 @@ cdef void loop_j(int i, int n, double *pr, double *pg):
     """
 
     cdef int nx = 1 << n
-    cdef int nxhalf = nx/2
+    cdef int nxhalf = nx // 2
 
     pg = pg + i * n
 
