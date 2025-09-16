@@ -202,9 +202,11 @@ IF NVCC_AVAILABLE:
         #endif
 
         int DLL_PREFIX cuda_full_state_space_gradient_score(double *ptheta, int n, double *pD, double *grad_out, double *score_out);
+        int DLL_PREFIX cuda_fisher(double *theta, int n, double *fim);
         void DLL_PREFIX gpu_compute_inverse(double *theta, int n, double *b, double *xout, int transp);
         """
         int cuda_full_state_space_gradient_score(double *ptheta, int n, double *pD, double *grad_out, double *score_out)
+        int cuda_fisher_upper(double *ptheta, int n, double *fim)
         void gpu_compute_inverse(double *theta, int n, double *b, double *xout, int transp)
 
 
@@ -262,5 +264,34 @@ def cuda_compute_inverse(double[:, :] theta, double[:] b, bint transp = False):
         cdef np.ndarray[np.double_t] xout = np.empty(nx, dtype=np.double)
         gpu_compute_inverse(&theta[0, 0], n, &b[0], &xout[0], transp)
         return xout
+    ELSE:
+        raise RuntimeError('The mhn package was not compiled with CUDA, so you cannot use this function.')
+
+
+def cuda_fisher(double[:, :] theta):
+    """
+    Computes the log-likelihood score and its gradient for a given theta and a given empirical distribution.
+
+    **This function can only be used if the mhn package was compiled with CUDA.**
+
+    Args:
+        theta (np.ndarray[np.double_t]): The theta matrix representing the cMHN.
+        pD (np.ndarray[np.double_t]): The probability distribution according to the training data.
+
+    Returns:
+        tuple: The gradient and the log-likelihood score.
+
+    Raises:
+        RuntimeError: If the mhn package was not compiled with CUDA.
+    """
+
+    IF NVCC_AVAILABLE:
+        cdef int n = theta.shape[0]
+        cdef np.ndarray[np.double_t, ndim=2] fim = np.empty((n**2, n**2), dtype=np.double)
+
+        cuda_fisher_upper(&theta[0, 0], n, &fim[0, 0])
+        # add the second half of the matrix
+        return fim + np.triu(fim, k=1).T
+        
     ELSE:
         raise RuntimeError('The mhn package was not compiled with CUDA, so you cannot use this function.')

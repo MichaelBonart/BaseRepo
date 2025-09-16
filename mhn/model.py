@@ -44,7 +44,7 @@ def bits_fixed_n(n: int, k: int) -> Iterator[int]:
     w = -1
     while w != stop_no:
         t = (v | (v - 1)) + 1
-        w = t | ((((t & -t)) // (v & (-v)) >> 1) - 1)
+        w = t | (((t & -t) // (v & (-v)) >> 1) - 1)
         v, w = w, v
         yield w
 
@@ -59,7 +59,9 @@ class cMHN:
         meta (dict | None): Metadata for the cMHN, e.g., parameters used to train the model.
     """
 
-    def __init__(self, log_theta: np.array, events: list[str] = None, meta: dict = None):
+    def __init__(
+        self, log_theta: np.array, events: list[str] = None, meta: dict = None
+    ):
         """
         Initializes the cMHN with a theta matrix, optional event names, and metadata.
 
@@ -77,7 +79,9 @@ class cMHN:
         self.events = events
         self.meta = meta
 
-    def sample_artificial_data(self, sample_num: int, as_dataframe: bool = False) -> np.ndarray | pd.DataFrame:
+    def sample_artificial_data(
+        self, sample_num: int, as_dataframe: bool = False
+    ) -> np.ndarray | pd.DataFrame:
         """
         Samples artificial data from the cMHN. Use np.random.seed() to make results reproducible.
 
@@ -123,9 +127,7 @@ class cMHN:
                     f"The initial state must be of size {self.log_theta.shape[1]}"
                 )
             if not set(initial_state.flatten()).issubset({0, 1}):
-                raise ValueError(
-                    "The initial state array must only contain 0s and 1s"
-                )
+                raise ValueError("The initial state array must only contain 0s and 1s")
         else:
             init_state_copy = list(initial_state)
             initial_state = np.zeros(self.log_theta.shape[1], dtype=np.int32)
@@ -221,9 +223,7 @@ class cMHN:
         df = pd.DataFrame(result)
         df.columns = ["PROBS"]
         if self.events is not None:
-            df.index = self.events + (
-                ["Observation"] if allow_observation else []
-            )
+            df.index = self.events + (["Observation"] if allow_observation else [])
         return df
 
     def _get_observation_rate(self, state: np.ndarray) -> float:
@@ -255,20 +255,16 @@ class cMHN:
         restr_diag = self.get_restr_diag(state=events)
         return np.exp(
             sum(
-                (
-                    self.log_theta[x_i, sigma[:n_i]].sum()
-                    + self.log_theta[x_i, x_i]
-                )
+                (self.log_theta[x_i, sigma[:n_i]].sum() + self.log_theta[x_i, x_i])
                 for n_i, x_i in enumerate(sigma)
             )
         ) / np.prod(
-            [
-                1 - restr_diag[(1 << pos)[:i].sum()]
-                for i in range(len(sigma) + 1)
-            ]
+            [1 - restr_diag[(1 << pos)[:i].sum()] for i in range(len(sigma) + 1)]
         )
 
-    def likeliest_order(self, state: np.array, normalize: bool = False) -> tuple[float, np.array]:
+    def likeliest_order(
+        self, state: np.array, normalize: bool = False
+    ) -> tuple[float, np.array]:
         """
         Returns the likeliest order in which a given state accumulated according to the MHN.
 
@@ -381,9 +377,9 @@ class cMHN:
         Args:
             filename (str): Name of the CSV file. JSON metadata file is named accordingly.
         """
-        pd.DataFrame(
-            self.log_theta, columns=self.events, index=self.events
-        ).to_csv(f"{filename}")
+        pd.DataFrame(self.log_theta, columns=self.events, index=self.events).to_csv(
+            f"{filename}"
+        )
         if self.meta is not None:
             json_serializable_meta = {}
             # check if objects in self.meta are JSON serializable, if not,
@@ -412,10 +408,7 @@ class cMHN:
         df = pd.read_csv(f"{filename}", index_col=0)
         if (
             events is None
-            and (
-                df.columns
-                != pd.Index([str(x) for x in range(len(df.columns))])
-            ).any()
+            and (df.columns != pd.Index([str(x) for x in range(len(df.columns))])).any()
         ):
             events = df.columns.to_list()
         try:
@@ -444,7 +437,6 @@ class cMHN:
         subdiag = np.zeros(nx)
 
         for i in range(n):
-
             current_length = 1
             subdiag[0] = 1
             # compute the ith subdiagonal of Q
@@ -561,9 +553,7 @@ class cMHN:
             dim_theta_1 * 0.35 + (3.2 if colorbar else 1.8),
             dim_theta_0 * 0.35 + 1,
         )
-        width_ratios = (
-            [4, dim_theta_1 + 6, 3] if colorbar else [4, dim_theta_1 + 3]
-        )
+        width_ratios = [4, dim_theta_1 + 6, 3] if colorbar else [4, dim_theta_1 + 3]
 
         # create axes object if not provided
         if ax is None:
@@ -611,9 +601,7 @@ class cMHN:
                 theta, cmap=cmap_thetas, vmin=-_max_th, vmax=_max_th
             )
         else:
-            _max_th = np.exp(
-                np.abs(self.log_theta - np.diag(self.log_theta)).max()
-            )
+            _max_th = np.exp(np.abs(self.log_theta - np.diag(self.log_theta)).max())
             _max_br = np.exp(np.abs(np.diag(self.log_theta)).max())
             theta = np.exp(self.log_theta)
             np.fill_diagonal(theta, 1)
@@ -662,13 +650,13 @@ class cMHN:
                 )
             if self.__class__ == oMHN:
                 _ = ax_brs.text(
-                        0,
-                        dim_theta_1,
-                        np.around(base_rates[-1, 0], decimals=2),
-                        ha="center",
-                        va="center",
-                        fontsize=8,
-                    )
+                    0,
+                    dim_theta_1,
+                    np.around(base_rates[-1, 0], decimals=2),
+                    ha="center",
+                    va="center",
+                    fontsize=8,
+                )
             for i in range(dim_theta_0):
                 for j in range(dim_theta_1):
                     if not i == j and (
@@ -731,17 +719,13 @@ class cMHN:
                 raise ValueError(
                     "Either orders or states must be provided to plot the most likely orders."
                 )
-            orders = [
-                tuple(self.likeliest_order(state=state)[1]) for state in states
-            ]
+            orders = [tuple(self.likeliest_order(state=state)[1]) for state in states]
         elif states is not None:
             raise ValueError(
                 "Not both orders and states can be provided to plot the most likely orders."
             )
 
-        event_list = self.events or [
-            str(i) for i in range(self.log_theta.shape[0])
-        ]
+        event_list = self.events or [str(i) for i in range(self.log_theta.shape[0])]
 
         events_used = {event for order in orders for event in order}
         events_used = sorted(events_used)
@@ -758,9 +742,7 @@ class cMHN:
             if len(order) > 1:
                 ax[i].plot([0, len(order) - 1], [0, 0], color="grey")
             for j, o in enumerate(order):
-                color = plt.get_cmap(cmap)(
-                    events_used.index(o) / len(events_used)
-                )
+                color = plt.get_cmap(cmap)(events_used.index(o) / len(events_used))
                 ax[i].scatter(
                     j,
                     0,
@@ -794,10 +776,21 @@ class cMHN:
 
         return ax
 
-    def plot_order_tree(self, orderings: Optional[list[tuple[int]]] = None, states: Optional[np.array] = None, max_event_num: int = 4, min_line_width: int = 1,
-                        max_line_width: int = 10, ax: Optional[matplotlib.axes.Axes] = None, inner_circle_radius: float = 2.0,
-                        circle_radius_diff: float = 1.0, markers: tuple[str] = ("o", "s", "D", "^", "p", "P", ">"), min_symbol_size: float = 30.,
-                        min_number_of_occurrence: int = 3, legend: Optional[Union[bool, dict]] = None) -> matplotlib.axes.Axes:
+    def plot_order_tree(
+        self,
+        orderings: Optional[list[tuple[int]]] = None,
+        states: Optional[np.array] = None,
+        max_event_num: int = 4,
+        min_line_width: int = 1,
+        max_line_width: int = 10,
+        ax: Optional[matplotlib.axes.Axes] = None,
+        inner_circle_radius: float = 2.0,
+        circle_radius_diff: float = 1.0,
+        markers: tuple[str] = ("o", "s", "D", "^", "p", "P", ">"),
+        min_symbol_size: float = 30.0,
+        min_number_of_occurrence: int = 3,
+        legend: Optional[Union[bool, dict]] = None,
+    ) -> matplotlib.axes.Axes:
         """
         Plots a tree representing the most probable chronological orders of events according to this MHN. Each path from the root of the tree (white circle) to
         a leaf illustrates a possible cancer progression within the given dataset. The symbols along each path denote events whose most probable chronological
@@ -820,7 +813,7 @@ class cMHN:
             min_symbol_size (float): Minimum size of the markers representing events in the tree.
             min_number_of_occurrence (int): Minimum number of occurrence of a state / ordering to be plotted in the tree. Used to avoid clutter.
             legend (Optional[Union[bool, dict]]): If True, a legend is added to the plot. If a dictionary is provided, it is passed to the legend function.
-            
+
         Returns:
              matplotlib.axes.Axes: The axis with the plotted tree.
         """
@@ -837,9 +830,22 @@ class cMHN:
         if ax is None:
             _, ax = plt.subplots()
 
-        circle_num = min(max_event_num, max(map(lambda ordering: len(ordering), orderings)))
-        orderings = list(filter(lambda ordering: orderings.count(ordering) >= min_number_of_occurrence, orderings))
+        circle_num = min(
+            max_event_num, max(map(lambda ordering: len(ordering), orderings))
+        )
+        orderings = list(
+            filter(
+                lambda ordering: orderings.count(ordering) >= min_number_of_occurrence,
+                orderings,
+            )
+        )
         orderings.sort()
+
+        if len(orderings) == 0:
+            warnings.warn(
+                "No orderings to plot, check input orderings/states and/or min_number_of_occurrence/max_event_num parameters."
+            )
+            return ax
 
         # chronological tree can be seen as a suffix tree
         suffix_tree_root = {"nodes": {}, "leaves": 0, "passed": 0, "is_end": False}
@@ -851,7 +857,12 @@ class cMHN:
                 if event not in curr_node["nodes"]:
                     if len(curr_node["nodes"]) > 0:
                         new_leaf = True
-                    curr_node["nodes"][event] = {"nodes": {}, "leaves": 1, "passed": 0, "is_end": False}
+                    curr_node["nodes"][event] = {
+                        "nodes": {},
+                        "leaves": 1,
+                        "passed": 0,
+                        "is_end": False,
+                    }
                 curr_node = curr_node["nodes"][event]
                 curr_node["passed"] += 1
                 backtracking_nodes.append(curr_node)
@@ -865,9 +876,17 @@ class cMHN:
         event_coordinates = defaultdict(list)
         event_symbol_sizes = defaultdict(list)
         event_symbol_border = defaultdict(list)
-        max_passed = max(suffix_tree_root[event]["passed"] for event in suffix_tree_root)
+        max_passed = max(
+            suffix_tree_root[event]["passed"] for event in suffix_tree_root
+        )
 
-        def recursive_tree_builder(suffix_tree: dict, min_angle: float, max_angle: float, order_idx: int, prev_coordinates: tuple[float, float]):
+        def recursive_tree_builder(
+            suffix_tree: dict,
+            min_angle: float,
+            max_angle: float,
+            order_idx: int,
+            prev_coordinates: tuple[float, float],
+        ):
             """Recursively build the tree by adding the lines and saving the symbol coordinates in event_coordinates."""
 
             if order_idx > circle_num or len(suffix_tree) == 0:
@@ -880,30 +899,124 @@ class cMHN:
                 node = suffix_tree[event]
                 span = node["leaves"] / total_leaves * (max_angle - min_angle)
                 symbol_angle = curr_angle + 0.5 * span
-                coordinates = np.sin(symbol_angle) * circle_radius, np.cos(symbol_angle) * circle_radius
+                coordinates = (
+                    np.sin(symbol_angle) * circle_radius,
+                    np.cos(symbol_angle) * circle_radius,
+                )
                 event_coordinates[event].append(coordinates)
-                linewidth = max(min_line_width, max_line_width * node["passed"] / max_passed)
-                event_symbol_sizes[event].append(max(linewidth**2 * np.pi / 2, min_symbol_size))
-                event_symbol_border[event].append("black" if node["is_end"] else "white")
-                ax.plot(*zip(prev_coordinates, coordinates), marker="", zorder=1,
-                        linestyle="-", color="black", linewidth=linewidth)
-                recursive_tree_builder(node["nodes"], curr_angle, curr_angle + span, order_idx + 1, coordinates)
+                linewidth = max(
+                    min_line_width, max_line_width * node["passed"] / max_passed
+                )
+                event_symbol_sizes[event].append(
+                    max(linewidth**2 * np.pi / 2, min_symbol_size)
+                )
+                event_symbol_border[event].append(
+                    "black" if node["is_end"] else "white"
+                )
+                ax.plot(
+                    *zip(prev_coordinates, coordinates),
+                    marker="",
+                    zorder=1,
+                    linestyle="-",
+                    color="black",
+                    linewidth=linewidth,
+                )
+                recursive_tree_builder(
+                    node["nodes"],
+                    curr_angle,
+                    curr_angle + span,
+                    order_idx + 1,
+                    coordinates,
+                )
                 curr_angle += span
 
-        recursive_tree_builder(suffix_tree_root, 0, 2 * np.pi, 0, (0., 0.))
-        ax.scatter([0], [0], marker="o", color="white", zorder=2, edgecolors="black", s=max_line_width**2 * np.pi)
-        for event, marker in zip(sorted(event_coordinates.keys()), itertools.cycle(markers)):
+        recursive_tree_builder(suffix_tree_root, 0, 2 * np.pi, 0, (0.0, 0.0))
+        ax.scatter(
+            [0],
+            [0],
+            marker="o",
+            color="white",
+            zorder=2,
+            edgecolors="black",
+            s=max_line_width**2 * np.pi,
+        )
+        for event, marker in zip(
+            sorted(event_coordinates.keys()), itertools.cycle(markers)
+        ):
             event_name = self.events[event] if self.events is not None else str(event)
-            ax.scatter(*zip(*event_coordinates[event]), label=event_name, alpha=1, zorder=2, marker=marker,
-                       edgecolors=event_symbol_border[event], s=event_symbol_sizes[event])
+            ax.scatter(
+                *zip(*event_coordinates[event]),
+                label=event_name,
+                alpha=1,
+                zorder=2,
+                marker=marker,
+                edgecolors=event_symbol_border[event],
+                s=event_symbol_sizes[event],
+            )
+
+        # we need to check if there is branching happening, to fix the
+        # aspect ratio
+        def recursive_check_branching(nodes):
+            if len(nodes) == 0:
+                return False
+            elif len(nodes) > 1:
+                return True
+            else:
+                return recursive_check_branching(next(iter(nodes.values()))["nodes"])
+
+        if recursive_check_branching(suffix_tree_root):
+            ax.set_aspect("equal")
 
         ax.axis("off")
-        ax.set_aspect("equal")
+
         # symbols in legend should have same size (https://stackoverflow.com/questions/24706125/setting-a-fixed-size-for-points-in-legend)
         if legend:
-            lgnd = ax.legend(**legend if isinstance(legend, dict) else {})
-            for handle in lgnd.legend_handles:
+            marker_legend = ax.legend(
+                **legend if isinstance(legend, dict) else {}, loc="upper right"
+            )
+            for handle in marker_legend.legend_handles:
                 handle.set_sizes([min_symbol_size])
+
+            ax.add_artist(marker_legend)
+
+            _min_sym = (None, np.inf)
+            _max_sym = (None, -np.inf)
+            for event, size_list in event_symbol_sizes.items():
+                if min(size_list) < _min_sym[1]:
+                    _min_sym = (event, min(size_list))
+                if max(size_list) > _max_sym[1]:
+                    _max_sym = (event, max(size_list))
+
+            def recursive_find_min(node):
+                return (
+                    min(recursive_find_min(child) for child in node["nodes"].values())
+                    if len(node["nodes"]) > 0
+                    else node["passed"]
+                )
+
+            min_passed = recursive_find_min({"nodes": suffix_tree_root})
+
+            m_min = ax.scatter([], [], c="gray", s=_min_sym[1], marker="o")
+            m_max = ax.scatter([], [], c="gray", s=_max_sym[1], marker="o")
+            l_min = ax.plot(
+                [],
+                [],
+                c="black",
+                lw=max(min_line_width, max_line_width * min_passed / max_passed),
+            )[0]
+            l_max = ax.plot([], [], c="black", lw=max_line_width)[0]
+            size_legend = ax.legend(
+                handles=[m_min, m_max, l_min, l_max],
+                labels=[
+                    f"{min_passed} Patients",
+                    f"{max_passed} Patients",
+                    f"{min_passed} Patients",
+                    f"{max_passed} Patients",
+                ],
+                loc="lower left",
+            )
+            ax.add_artist(size_legend)
+
         return ax
 
 
@@ -947,9 +1060,7 @@ class oMHN(cMHN):
         Raises:
             ValueError: If the given state array contains anything but 0s and 1s.
         """
-        return self.get_equivalent_classical_mhn().compute_marginal_likelihood(
-            state
-        )
+        return self.get_equivalent_classical_mhn().compute_marginal_likelihood(state)
 
     def get_equivalent_classical_mhn(self) -> cMHN:
         """
@@ -1018,8 +1129,9 @@ class oMHN(cMHN):
         """
         return self.get_equivalent_classical_mhn().order_likelihood(sigma)
 
-    def likeliest_order(self, state: np.array,
-                        normalize: bool = False) -> tuple[float, np.array]:
+    def likeliest_order(
+        self, state: np.array, normalize: bool = False
+    ) -> tuple[float, np.array]:
         """
         Returns the likeliest order in which a given state accumulated according to the MHN.
 
@@ -1032,9 +1144,7 @@ class oMHN(cMHN):
         Returns:
             tuple[float, Any]: Likelihood of the likeliest accumulation order and the order itself.
         """
-        return self.get_equivalent_classical_mhn().likeliest_order(
-            state, normalize
-        )
+        return self.get_equivalent_classical_mhn().likeliest_order(state, normalize)
 
     def m_likeliest_orders(
         self, state: np.array, m: int, normalize: bool = False
