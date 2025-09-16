@@ -240,7 +240,7 @@ def cuda_gradient_and_score(double[:, :] theta, double[:] pD):
         raise RuntimeError('The mhn package was not compiled with CUDA, so you cannot use this function.')
 
 
-cdef cuda_compute_inverse(double *theta, int n, double *b, double *xout, bint transp):
+def cuda_compute_inverse(double[:, :] theta, double[:] b, bint transp = False):
     """
     Computes the solution for [I-Q] x = b on the GPU.
 
@@ -259,24 +259,13 @@ cdef cuda_compute_inverse(double *theta, int n, double *b, double *xout, bint tr
     """
 
     IF NVCC_AVAILABLE:
-        # cdef int n = theta.shape[0]
-        # cdef int nx = 1 << n
-        # cdef np.ndarray[np.double_t] xout = np.empty(nx, dtype=np.double)
-        gpu_compute_inverse(theta, n, b, xout, transp)
-        # return xout
+        cdef int n = theta.shape[0]
+        cdef int nx = 1 << n
+        cdef np.ndarray[np.double_t] xout = np.empty(nx, dtype=np.double)
+        gpu_compute_inverse(&theta[0, 0], n, &b[0], &xout[0], transp)
+        return xout
     ELSE:
         raise RuntimeError('The mhn package was not compiled with CUDA, so you cannot use this function.')
-
-# cdef cuda_fisher_cmhn(double* theta, int n, double* fim):
-#     """
-#     Computes the Fisher information matrix for the given theta.
-#     """
-
-#     IF NVCC_AVAILABLE:
-
-#         cuda_fisher(theta, n, fim)
-#     ELSE:
-#         raise RuntimeError('The mhn package was not compiled with CUDA, so you cannot use this function.')
 
 
 def cuda_fisher(double[:, :] theta):
